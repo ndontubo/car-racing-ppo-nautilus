@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ndontubo-task5-installer
+spec:
+  restartPolicy: Never
+  containers:
+  - name: installer
+    image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+    command: ["sh", "-c", "sleep 1800"]
+    resources:
+      requests:
+        memory: 4Gi
+        cpu: "2"
+      limits:
+        memory: 8Gi
+        cpu: "4"
+    volumeMounts:
+    - name: pvcvolume
+      mountPath: /pvcvolume
+  volumes:
+  - name: pvcvolume
+    persistentVolumeClaim:
+      claimName: ndontubo-task5

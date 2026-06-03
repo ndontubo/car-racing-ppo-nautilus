@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ndontubo-task5-job
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: trainer
+        image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+        command: ["sh", "-c", "PYTHONPATH=/pvcvolume/python-packages python /pvcvolume/car_racing_train_v2.py"]
+        resources:
+          requests:
+            memory: 8Gi
+            cpu: "2"
+            nvidia.com/gpu: 1
+          limits:
+            memory: 16Gi
+            cpu: "4"
+            nvidia.com/gpu: 1
+        volumeMounts:
+        - name: pvcvolume
+          mountPath: /pvcvolume
+      volumes:
+      - name: pvcvolume
+        persistentVolumeClaim:
+          claimName: ndontubo-task5
+  backoffLimit: 1
