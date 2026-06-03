@@ -4,13 +4,12 @@
 
 Task 5 was about running reinforcement learning algorithms on Nautilus. The full assignment had three parts: read the Gymnasium and Stable Baselines 3 documentation, train a baseline RL algorithm on the Car Racing Gymnasium environment with TensorBoard logging, and run CARLA Gym's `run.py` for comparison. The deliverable was a one-page writeup describing the results, plus plots showing the training curves and a link to a GitHub repo with the code.
 
-I focused on the Car Racing portion, since CARLA Gym's `train.py` had hung in env initialization during Task 4 and the underlying RL skills are the same regardless of which environment trains on. The CARLA Gym attempt is documented in the Task 4 writeup.
+I focused on the Car Racing portion, since CARLA Gym's `train.py` had hung in env initialization during Task 4 and the underlying RL skills are the same regardless of which environment trains on. The CARLA Gym attempt is documented in the Task 4 writeup. However I was able to do a new attempt and get eventually get the gym running and get a model trained on it and benchmark it
 
-## Background
+## CARLA GYM TRAINING
 
-Gymnasium is the maintained replacement for OpenAI Gym, which has been unsupported since 2022. It provides a standard interface for RL environments where every env exposes `reset()`, `step(action)`, `observation_space`, and `action_space`. Stable Baselines 3 (SB3) is the matching maintained replacement for the original Stable Baselines, offering implementations of standard RL algorithms (PPO, SAC, A2C, DQN) that you point at any Gymnasium env. Together they form the standard RL pipeline.
+After completing the Car Racing baseline, I modified run.py (made a new file called run_nav.py) from carla-gym-env to train SAC from scratch instead of loading a pretrained model that didn't exist on the system. After two GPU OOM crashes (CARLA simulator + SAC competing for an 11GB shared 1080 Ti), I moved SAC to CPU. This succeeded: the training pipeline ran end-to-end, completing 4 episodes over 222 timesteps with the rollout/, train/, and time/ TensorBoard metrics all populating. At ~0.35 fps (the CPU bottleneck), the run was too slow to reach meaningful learning, but it demonstrated the full CARLA Gym + SB3 pipeline working. Logs from all three attempts are in carla_gym/carla_tb_logs/.
 
-Car Racing is a Gymnasium environment where the agent controls a 2D car through a procedurally generated racetrack. Observations are 96x96 RGB images of the car's view. Actions are three continuous values: steering, gas, and brake. The reward is -0.1 per timestep (a small penalty for taking time) plus +1000/N per new track tile visited, where N is the total number of tiles. The episode ends when the agent visits all tiles, fails badly, or hits the 1000-step time limit.
 
 ## Training setup
 
@@ -49,6 +48,3 @@ The most useful technical lesson was that the Monitor wrapper is not optional fo
 The broader lesson is about how RL training actually unfolds. The curve I produced is not a steady upward climb. It's a long plateau followed by a sudden breakthrough. If I had stopped training at 100K timesteps because nothing was happening, I would have concluded PPO doesn't learn Car Racing. The truth is that PPO needs time to escape the local minimum, and the breakthrough comes well after the period when training looks dead. This argues for committing to longer training runs than feels comfortable and for not interpreting flat reward curves as failure too early.
 
 The Option B PVC install pattern (`pip install --target=/pvcvolume/...`) is something I will reuse for every future Nautilus RL project. The first installer run was the same speed as a normal pip install, but every subsequent Job started in seconds instead of minutes, and the dependency state was reproducible across restarts of the Desktop GUI environment. This is the real workflow shape for iterative ML research on shared clusters, much closer to how production ML teams work than the per-job pip install I used in Task 3.
-
-##CARLA Gym attempt
-After completing the Car Racing baseline, I modified run.py (made a new file called run_nav.py) from carla-gym-env to train SAC from scratch instead of loading a pretrained model that didn't exist on the system. After two GPU OOM crashes (CARLA simulator + SAC competing for an 11GB shared 1080 Ti), I moved SAC to CPU. This succeeded: the training pipeline ran end-to-end, completing 4 episodes over 222 timesteps with the rollout/, train/, and time/ TensorBoard metrics all populating. At ~0.35 fps (the CPU bottleneck), the run was too slow to reach meaningful learning, but it demonstrated the full CARLA Gym + SB3 pipeline working. Logs from all three attempts are in carla_gym/carla_tb_logs/.
